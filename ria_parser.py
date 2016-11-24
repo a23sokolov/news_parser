@@ -1,15 +1,10 @@
 import requests
 import sys
-import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup
 import json
 import codecs
 import datetime
 
-xmldata = '''
-<row name="abc" age="40" body="blalalala..." creationdate="03/10/10" />
-<row name="bcd" age="50" body="blalalala..." creationdate="03/10/09" />
-'''
 DEFAULT_PREFIX = 'https://ria.ru/'
 DEFAULT_PREFIX_URL = 'https://ria.ru/world/more.html?date={datentime}&onedayonly=1'
 
@@ -77,11 +72,5 @@ def parse_article_url(url):
     return res
 
 
-def create_tree():
-    rows = ET.fromstring('<rows>' + xmldata + '</rows>')
-    print len(rows)
-
-
 if __name__ == "__main__":
     start_request(sys.argv[1:])
-    # parse_article_url(sys.argv[1])

@@ -1,31 +1,32 @@
 import requests
-import sys
 from bs4 import BeautifulSoup
 import json
 import codecs
 import datetime
+from utils import appropriate_title
 
 DEFAULT_PREFIX = 'https://ria.ru/'
 DEFAULT_PREFIX_URL = 'https://ria.ru/world/more.html?date={datentime}&onedayonly=1'
 
 
-def start_request(argv):
-    params = argv[0]
-    start_date = datetime.datetime.strptime(argv[1], '%d/%m/%Y').replace(hour=23, minute=59)
-    end_date = datetime.datetime.strptime(argv[2], '%d/%m/%Y').replace(hour=23, minute=59)
+def start_request(params, start_date, end_date):
+    print('ria_parser start')
+    start_date = datetime.datetime.strptime(start_date, '%d/%m/%Y').replace(hour=23, minute=59)
+    end_date = datetime.datetime.strptime(end_date, '%d/%m/%Y').replace(hour=23, minute=59)
     exit_node = []
-    with codecs.open("parsed_url.txt", "w", "utf-8") as jsonfile:
+    with codecs.open("ria_news.txt", "w", "utf-8") as jsonfile:
         while (end_date - start_date).days >= -1:
             url = DEFAULT_PREFIX_URL.format(datentime=end_date.strftime('%Y%m%dT%H%M%S'))
-            response_json = requests.get(url)
-            bs = BeautifulSoup(response_json.content[response_json.content.index('\n'):], 'lxml')
-            parsed_node, end_date = parse_html(bs, params)
+            response = requests.get(url)
+            bs = BeautifulSoup(response.content[response.content.index('\n'):], 'lxml')
+            parsed_node, end_date = _parse_html(bs, params)
             exit_node += parsed_node
             print end_date.strftime('%d-%m-%y %H:%M')
         json.dump(exit_node, jsonfile, ensure_ascii=False)
+    print('ria_parser finished')
 
 
-def parse_html(beatifulSoup, params):
+def _parse_html(beatifulSoup, params):
     appropriate_link = []
     time = None
     count = 0
@@ -41,9 +42,8 @@ def parse_html(beatifulSoup, params):
         dictionary['date'] = date
         dictionary['time'] = time
         dictionary['title'] = title
-        # print title
         dictionary['url'] = url
-        dictionary['text'] = parse_article_url(url)
+        dictionary['text'] = _parse_article_url(url)
         appropriate_link.append(dictionary)
     splitted_time = time.split(':')
     hour = int(splitted_time[0])
@@ -52,25 +52,13 @@ def parse_html(beatifulSoup, params):
     return appropriate_link, date_ret
 
 
-def appropriate_title(title, params):
-    for param in params.split(' '):
-        if params not in title:
-            return False
-    return True
-
-
-def parse_article_url(url):
-    response_json = requests.get(url)
-    bs = BeautifulSoup(response_json.content[response_json.content.index('\n'):], 'lxml')
+def _parse_article_url(url):
+    response = requests.get(url)
+    bs = BeautifulSoup(response.content[response.content.index('\n'):], 'lxml')
     result = bs.find(attrs={"class": "b-article__body js-mediator-article"})
-    # print result
     res = []
     for tag in result.find_all('p'):
         _res_p = tag.find(text=True)
         if _res_p:
             res.append(_res_p)
-    return res
-
-
-if __name__ == "__main__":
-    start_request(sys.argv[1:])
+    return reduce(lambda x, y: x + y, res)

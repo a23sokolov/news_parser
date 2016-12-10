@@ -41,9 +41,8 @@ def execute():
 parsers = {
     1: [ria_parser.start_request],
     2: [tass_parser.start_request],
-    # 3: [rbk_parser.start_request],
-    3: [ria_parser.start_request, tass_parser.start_request],
-    0: [ria_parser.start_request, tass_parser.start_request]
+    3: [rbc_parser.start_request],
+    0: [ria_parser.start_request, tass_parser.start_request, rbc_parser.start_request]
 }
 
 

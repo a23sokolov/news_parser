@@ -31,17 +31,16 @@ def _parse_json(response_json, params):
     appropriate_link = []
     time_art = None
     count = 0
-
     for article in response_json.get('articles'):
         count += 1
 
         title = article.get('title')
         url = DEFAULT_PREFIX + article.get('url')
-        # ignoring interviews (if need will be add)
+        date_n_time_art = datetime.datetime.fromtimestamp(float(article.get('time')))
+        # ignoring interviews
         if not appropriate_title(title.lower().encode('utf8'), params) or 'interviews' in url:
             continue
 
-        date_n_time_art = datetime.datetime.fromtimestamp(float(article.get('time')))
         time_art = date_n_time_art.strftime('%H:%M')
         date = date_n_time_art.strftime('%d.%m.%y')
         dictionary = {}

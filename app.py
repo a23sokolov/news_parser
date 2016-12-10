@@ -1,7 +1,9 @@
 import sys
-import ria_parser
-import tass_parser
-import rbc_parser
+from parsers import (
+    ria_parser,
+    tass_parser,
+    rbc_parser
+)
 import datetime
 import log as Logger
 

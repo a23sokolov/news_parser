@@ -3,8 +3,10 @@ from bs4 import BeautifulSoup
 import json
 import codecs
 import datetime
+import log as Logger
 from utils import appropriate_title
 
+log = Logger.get_logger(__name__)
 DEFAULT_PREFIX = 'https://ria.ru/'
 DEFAULT_PREFIX_URL = 'https://ria.ru/world/more.html?date={datentime}&onedayonly=1'
 
@@ -30,25 +32,29 @@ def _parse_html(beatifulSoup, params):
     appropriate_link = []
     time = None
     count = 0
-    for tag in beatifulSoup.find_all(attrs={"class": "b-list__item"}):
-        count += 1
-        title = tag.find(attrs={"class": "b-list__item-title"}).span.text
-        time = tag.find(attrs={"class": "b-list__item-time"}).span.text
-        date = tag.find(attrs={"class": "b-list__item-date"}).span.text
-        if not appropriate_title(title.lower().encode('utf8'), params):
-            continue
-        url = DEFAULT_PREFIX + tag.find('a').get('href')
-        dictionary = {}
-        dictionary['date'] = date
-        dictionary['time'] = time
-        dictionary['title'] = title
-        dictionary['url'] = url
-        dictionary['text'] = _parse_article_url(url)
-        appropriate_link.append(dictionary)
-    splitted_time = time.split(':')
-    hour = int(splitted_time[0])
-    minute = int(splitted_time[1])
-    date_ret = datetime.datetime.strptime(str(date), '%d.%m.%Y').replace(hour=hour, minute=minute)
+    try:
+        for tag in beatifulSoup.find_all(attrs={"class": "b-list__item"}):
+            count += 1
+            title = tag.find(attrs={"class": "b-list__item-title"}).span.text
+            time = tag.find(attrs={"class": "b-list__item-time"}).span.text
+            date = tag.find(attrs={"class": "b-list__item-date"}).span.text
+            if not appropriate_title(title.lower().encode('utf8'), params):
+                continue
+            url = DEFAULT_PREFIX + tag.find('a').get('href')
+            dictionary = {}
+            dictionary['date'] = date
+            dictionary['time'] = time
+            dictionary['title'] = title
+            dictionary['url'] = url
+            dictionary['text'] = _parse_article_url(url)
+            appropriate_link.append(dictionary)
+
+        splitted_time = time.split(':')
+        hour = int(splitted_time[0])
+        minute = int(splitted_time[1])
+        date_ret = datetime.datetime.strptime(str(date), '%d.%m.%Y').replace(hour=hour, minute=minute)
+    except:
+        log.exception('ria_parser: _parse_html')
     return appropriate_link, date_ret
 
 

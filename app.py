@@ -5,6 +5,7 @@ from parsers import (
     rbc_parser
 )
 import datetime
+import time
 import log as Logger
 
 ARGV_PARAM_TAGS = 1
@@ -26,7 +27,7 @@ def execute():
                 end_date = sys.argv[ARGV_END_DATE]
             else:
                 end_date = sys.argv[ARGV_END_DATE]
-                _pv = sys.argv[ARGV_PARSER_CODE]
+                _pv = int(sys.argv[ARGV_PARSER_CODE])
                 parser_code = _pv if _pv < 4 and _pv >= 0 else 0
 
             for func in parsers.get(parser_code):
@@ -37,7 +38,7 @@ def execute():
             sys.stdout.write('Incorrect params check github repository')
     except:
         log.exception('Input params = ' + repr(sys.argv))
-        sys.stderr.write('Something go wrong open. Check logs.\n')
+        sys.stderr.write('Something go wrong open logs.\n')
 
 
 parsers = {
@@ -49,4 +50,6 @@ parsers = {
 
 
 if __name__ == "__main__":
+    start_time = time.time()
     execute()
+    print("--- %s seconds ---" % (time.time() - start_time))

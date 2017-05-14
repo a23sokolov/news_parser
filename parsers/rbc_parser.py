@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import requests
 from bs4 import BeautifulSoup
 import json
@@ -7,6 +8,7 @@ from utils import appropriate_title
 import log as Logger
 import dateparser
 import time
+import os
 from concurrent import futures
 
 DEFAULT_PREFIX_URL = 'http://www.rbc.ru/filter/ajax?type=short_news%7Carticle&dateFrom={start_date}&dateTo={end_date}&offset={offset}&limit=50'
@@ -22,7 +24,7 @@ def start_request(params, start_date, end_date):
     exit_node = []
     offset_step = DEFAULT_OFFSET
     current_offset = 0
-    with codecs.open("rbc_news.txt", "w", "utf-8") as jsonfile:
+    with codecs.open("articles/rbc_news.txt", "w", "utf-8") as jsonfile:
         while DEFAULT_OFFSET == offset_step:
             url = DEFAULT_PREFIX_URL.format(start_date=start_date, end_date=end_date, offset=current_offset)
             response_json = requests.get(url).json()
@@ -31,7 +33,7 @@ def start_request(params, start_date, end_date):
             exit_node += parsed_node
             print(log_date.strftime('%d-%m-%y %H:%M'))
         json.dump(exit_node, jsonfile, ensure_ascii=False)
-    print("rbc_parser finished --- %s seconds ---" % (time.time() - start_time))
+    print("rbc_parser finished --- %d nodes, %s seconds ---" % (len(exit_node), (time.time() - start_time)))
 
 
 def _parse_json(response_json, params):
@@ -46,8 +48,9 @@ def _parse_json(response_json, params):
         _date = _date.find(text=True).strip() if _date else None
         date_n_time_art = dateparser.parse(_date) if _date else datetime.datetime.now()
 
-        with futures.ThreadPoolExecutor(max_workers=5) as executor:
-            appropriate_link = list(executor.map(lambda p: _parse_article_body(p, params), articles))
+        # with futures.ThreadPoolExecutor(max_workers=5) as executor:
+        #     appropriate_link = list(executor.map(lambda p: _parse_article_body(p, params), articles))
+        appropriate_link = list(map(lambda p: _parse_article_body(p, params), articles))
         appropriate_link = filter(lambda x: x, appropriate_link)
     except:
         log.exception('rbc_parser: _parse_json')

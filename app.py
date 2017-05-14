@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 from parsers import (
     ria_parser,
@@ -7,6 +8,7 @@ from parsers import (
 import datetime
 import time
 import log as Logger
+import os
 
 ARGV_PARAM_TAGS = 1
 ARGV_START_DATE = 2
@@ -30,6 +32,9 @@ def execute():
                 _pv = int(sys.argv[ARGV_PARSER_CODE])
                 parser_code = _pv if _pv < 4 and _pv >= 0 else 0
 
+            out_file_package = os.getcwd() + '/articles'
+            if not os.path.exists(out_file_package):
+                os.makedirs(out_file_package)
             for func in parsers.get(parser_code):
                 func(params, start_date, end_date)
             sys.stdout.write('Script finished check output files')

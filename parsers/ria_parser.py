@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import requests
 from bs4 import BeautifulSoup
 import json
@@ -19,19 +20,19 @@ def start_request(params, start_date, end_date):
     start_date = datetime.datetime.strptime(start_date, '%d/%m/%Y').replace(hour=23, minute=59)
     end_date = datetime.datetime.strptime(end_date, '%d/%m/%Y').replace(hour=23, minute=59)
     exit_node = []
-    with codecs.open("ria_news.txt", "w", "utf-8") as jsonfile:
+    with codecs.open("articles/ria_news.txt", "w", "utf-8") as jsonfile:
         while (end_date - start_date).days >= -1:
             url = DEFAULT_PREFIX_URL.format(datentime=end_date.strftime('%Y%m%dT%H%M%S'))
             response = requests.get(url)
             bs = BeautifulSoup(response.content[response.content.index('\n'):], 'lxml')
-            parsed_node, end_date = _parse_html(bs, params)
+            parsed_node, end_date = _parse_html(bs, params, url)
             exit_node += parsed_node
             print(end_date.strftime('%d-%m-%y %H:%M'))
         json.dump(exit_node, jsonfile, ensure_ascii=False)
-    print("ria_parser finished --- %s seconds ---" % (time.time() - start_time))
+    print("ria_parser finished --- %d nodes, %s seconds ---" % (len(exit_node), (time.time() - start_time)))
 
 
-def _parse_html(beatifulSoup, params):
+def _parse_html(beatifulSoup, params, url):
     appropriate_link = []
     try:
         start_res = beatifulSoup.find_all(attrs={"class": "b-list__item"})
@@ -45,24 +46,28 @@ def _parse_html(beatifulSoup, params):
         minute = int(splitted_time[1])
         date_ret = datetime.datetime.strptime(str(date), '%d.%m.%Y').replace(hour=hour, minute=minute)
     except:
-        log.exception('ria_parser: _parse_html')
+        log.exception('ria_parser: _parse_html url = ' + url)
     return appropriate_link, date_ret
 
 
 def _parse_article_body(article, params):
-    title = article.find(attrs={"class": "b-list__item-title"}).span.text
-    time = article.find(attrs={"class": "b-list__item-time"}).span.text
-    date = article.find(attrs={"class": "b-list__item-date"}).span.text
-    if not appropriate_title(title.lower().encode('utf8'), params):
-        return None
-    url = DEFAULT_PREFIX + article.find('a').get('href')
-    dictionary = {}
-    dictionary['date'] = date
-    dictionary['time'] = time
-    dictionary['title'] = title
-    dictionary['url'] = url
-    dictionary['text'] = _parse_article_url(url)
-    return dictionary
+    try:
+        title = article.find(attrs={"class": "b-list__item-title"}).span.text
+        time = article.find(attrs={"class": "b-list__item-time"}).span.text
+        date = article.find(attrs={"class": "b-list__item-date"}).span.text
+        if not appropriate_title(title.lower().encode('utf8'), params):
+            return None
+        url = DEFAULT_PREFIX + article.find('a').get('href')
+        dictionary = {}
+        dictionary['date'] = date
+        dictionary['time'] = time
+        dictionary['title'] = title
+        dictionary['url'] = url
+        dictionary['text'] = _parse_article_url(url)
+        return dictionary
+    except:
+        log.exception('ria_parser: _parse_article_body url = ' + url)
+        return
 
 
 def _parse_article_url(url):
